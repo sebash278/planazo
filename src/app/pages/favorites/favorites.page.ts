@@ -6,7 +6,6 @@ import { PlanazoHeaderComponent } from '../../shared/components/header/header.co
 import { EventCardComponent } from '../../shared/components/event-card/event-card.component';
 import { EventService } from '../../core/services/event.service';
 import { AuthService } from '../../core/services/auth.service';
-import { OfflineService } from '../../core/services/offline.service';
 import { SqliteService } from '../../core/services/sqlite.service';
 import { PlanazoEvent } from '../../core/models/event.model';
 
@@ -31,44 +30,6 @@ import { PlanazoEvent } from '../../core/models/event.model';
       <app-planazo-header></app-planazo-header>
 
       <div class="pt-20 pb-24 px-4 max-w-lg mx-auto flex flex-col gap-4">
-        <div
-          class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border transition-all"
-          [ngClass]="offlineService.isOffline() ? 'bg-amber-950/40 border-amber-600/50' : 'bg-[#16181f] border-[#e11d48]/30'"
-        >
-          <div
-            class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-            [ngClass]="offlineService.isOffline() ? 'bg-amber-500/20 text-amber-400' : 'bg-[#e11d48]/15 text-[#e11d48]'"
-          >
-            <span class="material-symbols-outlined text-[18px]">
-              {{ offlineService.isOffline() ? 'cloud_off' : 'cloud_done' }}
-            </span>
-          </div>
-
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-bold text-white">
-                {{ offlineService.isOffline() ? 'Modo Offline Activo' : 'Caché SQLite Sincronizada' }}
-              </span>
-              <span
-                class="w-2 h-2 rounded-full"
-                [ngClass]="offlineService.isOffline() ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'"
-              ></span>
-            </div>
-            <p class="text-[11px] text-slate-300 truncate">
-              Planes guardados y disponibles sin conexión en Funza
-            </p>
-          </div>
-
-          <button
-            type="button"
-            (click)="toggleOfflineSimulation()"
-            class="px-2 py-1 rounded-lg bg-[#1f222c] border border-white/10 text-[10px] font-bold text-slate-300 active:scale-95"
-            title="Simular conexión/desconexión"
-          >
-            {{ offlineService.isOffline() ? 'Conectar' : 'Simular Offline' }}
-          </button>
-        </div>
-
         <div class="flex items-center justify-between mt-1">
           <div>
             <div class="flex items-center gap-2">
@@ -161,7 +122,6 @@ import { PlanazoEvent } from '../../core/models/event.model';
 export class FavoritesPage {
   eventService = inject(EventService);
   authService = inject(AuthService);
-  offlineService = inject(OfflineService);
   sqliteService = inject(SqliteService);
   router = inject(Router);
 
@@ -194,10 +154,6 @@ export class FavoritesPage {
       this.sqliteService.cacheEvents(this.eventService.favoriteEvents());
       this.isSyncing.set(false);
     }, 600);
-  }
-
-  toggleOfflineSimulation() {
-    this.offlineService.toggleSimulatedOffline();
   }
 
   handleRefresh(event: any) {

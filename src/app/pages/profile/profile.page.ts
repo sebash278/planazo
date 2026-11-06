@@ -73,7 +73,7 @@ import { EventCategory } from '../../core/models/event.model';
             <span>Inicia sesión para una experiencia completa</span>
           </div>
           <p class="text-xs text-slate-400">
-            Guarda tus planes favoritos, sincroniza con SQLite offline y recibe recomendaciones personalizadas en Funza.
+            Guarda tus planes favoritos y recibe recomendaciones personalizadas en Funza.
           </p>
           <button
             type="button"
