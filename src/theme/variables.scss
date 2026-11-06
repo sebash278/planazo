@@ -1,0 +1,55 @@
+// colores de Funza para que se vea elegante :D
+:root {
+  --ion-color-primary: #e11d48;
+  --ion-color-primary-rgb: 225, 29, 72;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #be123c;
+  --ion-color-primary-tint: #fb7185;
+
+  --ion-color-secondary: #f8fafc;
+  --ion-color-secondary-rgb: 248, 250, 252;
+  --ion-color-secondary-contrast: #0d0e12;
+  --ion-color-secondary-contrast-rgb: 13, 14, 18;
+  --ion-color-secondary-shade: #e2e8f0;
+  --ion-color-secondary-tint: #ffffff;
+
+  --ion-color-tertiary: #38bdf8;
+  --ion-color-tertiary-rgb: 56, 189, 248;
+  --ion-color-tertiary-contrast: #001e2c;
+  --ion-color-tertiary-contrast-rgb: 0, 30, 44;
+  --ion-color-tertiary-shade: #0284c7;
+  --ion-color-tertiary-tint: #7dd3fc;
+
+  --app-bg-canvas: #0d0e12;
+  --app-surface-card: #16181f;
+  --app-surface-float: #1f222c;
+  --app-surface-inset: #282c38;
+  --app-border-subtle: rgba(255, 255, 255, 0.08);
+  --app-border-crimson: rgba(225, 29, 72, 0.4);
+
+  --app-font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --app-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --app-text-high: #ffffff;
+  --app-text-medium: #94a3b8;
+  --app-text-muted: #64748b;
+  --app-crimson-glow: 0 0 20px -4px rgba(225, 29, 72, 0.45);
+}
+
+// modo oscuro
+body.dark,
+:root {
+  --ion-background-color: #0d0e12;
+  --ion-background-color-rgb: 13, 14, 18;
+
+  --ion-text-color: #ffffff;
+  --ion-text-color-rgb: 255, 255, 255;
+
+  --ion-card-background: #16181f;
+  --ion-item-background: #16181f;
+  --ion-toolbar-background: rgba(13, 14, 18, 0.9);
+  --ion-tab-bar-background: rgba(18, 19, 23, 0.92);
+
+  --ion-border-color: rgba(255, 255, 255, 0.08);
+}
