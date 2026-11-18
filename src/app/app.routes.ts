@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import type { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
@@ -8,17 +8,17 @@ export const routes: Routes = [
   {
     path: 'event/:id',
     loadComponent: () =>
-      import('./pages/event-detail/event-detail.page').then((m) => m.EventDetailPage),
+      import('./features/events/event-detail/event-detail.page').then((m) => m.EventDetailPage),
   },
   {
     path: 'auth/login',
     loadComponent: () =>
-      import('./pages/auth/login.page').then((m) => m.LoginPage),
+      import('./features/auth/login.page').then((m) => m.LoginPage),
   },
   {
     path: 'auth/register',
     loadComponent: () =>
-      import('./pages/auth/register.page').then((m) => m.RegisterPage),
+      import('./features/auth/register.page').then((m) => m.RegisterPage),
   },
   {
     path: '**',

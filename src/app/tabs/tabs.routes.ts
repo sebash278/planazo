@@ -1,4 +1,7 @@
-import { Routes } from '@angular/router';
+import type { Routes } from '@angular/router';
+
+import { authGuard } from '../core/guards/auth.guard';
+
 import { TabsPage } from './tabs.page';
 
 export const routes: Routes = [
@@ -9,22 +12,24 @@ export const routes: Routes = [
       {
         path: 'explorar',
         loadComponent: () =>
-          import('../pages/explore/explore.page').then((m) => m.ExplorePage),
+          import('../features/events/explore/explore.page').then((m) => m.ExplorePage),
       },
       {
         path: 'buscar',
         loadComponent: () =>
-          import('../pages/search-map/search-map.page').then((m) => m.SearchMapPage),
+          import('../features/events/search-map/search-map.page').then((m) => m.SearchMapPage),
       },
       {
         path: 'favoritos',
+        canActivate: [authGuard],
         loadComponent: () =>
-          import('../pages/favorites/favorites.page').then((m) => m.FavoritesPage),
+          import('../features/favorites/favorites.page').then((m) => m.FavoritesPage),
       },
       {
         path: 'perfil',
+        canActivate: [authGuard],
         loadComponent: () =>
-          import('../pages/profile/profile.page').then((m) => m.ProfilePage),
+          import('../features/profile/profile.page').then((m) => m.ProfilePage),
       },
       {
         path: '',
