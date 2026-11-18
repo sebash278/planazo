@@ -6,31 +6,44 @@ import { Network } from '@capacitor/network';
 })
 export class OfflineService {
   private isOfflineSignal = signal<boolean>(!navigator.onLine);
+  private isSimulatedSignal = signal<boolean>(false);
+
   readonly isOffline = this.isOfflineSignal.asReadonly();
+  readonly isSimulated = this.isSimulatedSignal.asReadonly();
 
   constructor() {
-    this.initNetworkListener();
+    void this.initNetworkListener();
   }
 
-  private async initNetworkListener() {
+  private async initNetworkListener(): Promise<void> {
     try {
       const status = await Network.getStatus();
-      this.isOfflineSignal.set(!status.connected);
-
-      Network.addListener('networkStatusChange', (status) => {
+      if (!this.isSimulatedSignal()) {
         this.isOfflineSignal.set(!status.connected);
+      }
+
+      await Network.addListener('networkStatusChange', (nextStatus) => {
+        if (!this.isSimulatedSignal()) {
+          this.isOfflineSignal.set(!nextStatus.connected);
+        }
       });
     } catch {
-      // si capacitor molesta, usamos los eventos del navegador
-      window.addEventListener('online', () => this.isOfflineSignal.set(false));
-      window.addEventListener('offline', () => this.isOfflineSignal.set(true));
+      // Fallback a eventos estándar del navegador cuando el plugin nativo no aplica.
+      window.addEventListener('online', () => {
+        if (!this.isSimulatedSignal()) {
+          this.isOfflineSignal.set(false);
+        }
+      });
+      window.addEventListener('offline', () => {
+        this.isOfflineSignal.set(true);
+      });
     }
   }
 
-  // botón trampa para probar si el modo offline esta gucci
   toggleSimulatedOffline(): boolean {
-    const next = !this.isOfflineSignal();
-    this.isOfflineSignal.set(next);
-    return next;
+    const nextSimulated = !this.isSimulatedSignal();
+    this.isSimulatedSignal.set(nextSimulated);
+    this.isOfflineSignal.set(nextSimulated ? true : !navigator.onLine);
+    return this.isOfflineSignal();
   }
 }

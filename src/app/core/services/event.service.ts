@@ -1,16 +1,28 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { PlanazoEvent, EventCategory } from '../models/event.model';
-import { FilterOptions, DEFAULT_FILTER_OPTIONS } from '../models/filter.model';
+import { computed, inject, Injectable, signal } from '@angular/core';
+
+import type { PlanazoEvent } from '../models/event.model';
+import type { FilterOptions } from '../models/filter.model';
+import { DEFAULT_FILTER_OPTIONS } from '../models/filter.model';
+
+import { OfflineService } from './offline.service';
+import { SqliteService } from './sqlite.service';
+
+const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
+  Funza: { lat: 4.7161, lng: -74.212 },
+  Mosquera: { lat: 4.7059, lng: -74.2302 },
+  'Madrid, Cund.': { lat: 4.7324, lng: -74.2642 },
+  Facatativá: { lat: 4.8143, lng: -74.3547 },
+  Bojacá: { lat: 4.7316, lng: -74.3422 },
+};
 
 @Injectable({
   providedIn: 'root',
 })
 export class EventService {
-  // el centro del universo (Funza)
-  private readonly FUNZA_LAT = 4.7161;
-  private readonly FUNZA_LNG = -74.212;
+  private sqliteService = inject(SqliteService);
+  private offlineService = inject(OfflineService);
+  private hasManualFavoriteChange = false;
 
-  // datos quemaditos con amor para que no se vea pelado
   private readonly initialEvents: PlanazoEvent[] = [
     {
       id: 'evt-bacata-urbano',
@@ -21,8 +33,10 @@ export class EventService {
       categoryIcon: 'music_note',
       status: 'proximo_a_comenzar',
       statusMessage: 'Inicia en 2 horas • Puertas 17:15h',
-      imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=900&q=80',
-      description: 'Gran festival urbano con la presentación de artistas destacados de la escena nacional e internacional. Concierto al aire libre con zonas de comida sabanera, luces y pantallas gigantes.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Gran festival urbano con la presentación de artistas destacados de la escena nacional e internacional. Concierto al aire libre con zonas de comida sabanera, luces y pantallas gigantes.',
       organizer: 'Alcaldía de Funza / Centro Cultural Bacatá',
       organizerVerified: true,
       schedule: {
@@ -66,8 +80,10 @@ export class EventService {
       categoryIcon: 'theater_comedy',
       status: 'normal',
       statusMessage: 'Confirmado • Entrada Libre',
-      imageUrl: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=900&q=80',
-      description: 'El legendario Festival Zaquesazipa rinde homenaje a la herencia muisca y la cultura cundinamarquesa con más de 20 agrupaciones teatrales y danzas folclóricas en tarima.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=900&q=80',
+      description:
+        'El legendario Festival Zaquesazipa rinde homenaje a la herencia muisca y la cultura cundinamarquesa con más de 20 agrupaciones teatrales y danzas folclóricas en tarima.',
       organizer: 'Dirección de Cultura de Funza',
       organizerVerified: true,
       schedule: {
@@ -99,7 +115,7 @@ export class EventService {
         parkingAvailable: false,
       },
       isFeatured: true,
-      isFavorite: true,
+      isFavorite: false,
     },
     {
       id: 'evt-feria-gastronomica',
@@ -110,8 +126,10 @@ export class EventService {
       categoryIcon: 'restaurant',
       status: 'normal',
       statusMessage: 'Más de 35 restaurantes participantes',
-      imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80',
-      description: 'Un fin de semana dedicado a la riqueza culinaria de Funza y municipios vecinos. Degustaciones de quesos sabaneros, amasijos, arepas tradicionales, postres y cerveza artesanal.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Un fin de semana dedicado a la riqueza culinaria de Funza y municipios vecinos. Degustaciones de quesos sabaneros, amasijos, arepas tradicionales, postres y cerveza artesanal.',
       organizer: 'Asociación Gastronómica de Funza',
       organizerVerified: true,
       schedule: {
@@ -152,8 +170,10 @@ export class EventService {
       categoryIcon: 'directions_run',
       status: 'ultimos_cupos',
       statusMessage: '¡Últimos 15 kits de competición!',
-      imageUrl: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=900&q=80',
-      description: 'Recorrido nocturno plano y rápido por las principales vías de Funza con llegada en la moderna pista de la Villa Olímpica. Incluye camiseta técnica, chip y medalla de finalista.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Recorrido nocturno plano y rápido por las principales vías de Funza con llegada en la moderna pista de la Villa Olímpica. Incluye camiseta técnica, chip y medalla de finalista.',
       organizer: 'Instituto Municipal de Recreación y Deporte (Cundeportes Funza)',
       organizerVerified: true,
       schedule: {
@@ -197,8 +217,10 @@ export class EventService {
       categoryIcon: 'nature_people',
       status: 'normal',
       statusMessage: 'Guías biólogos certificados',
-      imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=900&q=80',
-      description: 'Visita guiada por el ecosistema del Humedal Gualí. Conoce la importancia de este reservorio hídrico, avistamiento de tinguas, patos canadienses y siembra simbólica de frailejones y especies nativas.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Visita guiada por el ecosistema del Humedal Gualí. Conoce la importancia de este reservorio hídrico, avistamiento de tinguas, patos canadienses y siembra simbólica de frailejones y especies nativas.',
       organizer: 'Secretaría de Medio Ambiente y CAR Cundinamarca',
       organizerVerified: true,
       schedule: {
@@ -241,8 +263,10 @@ export class EventService {
       categoryIcon: 'movie',
       status: 'normal',
       statusMessage: 'Palomitas gratis a las primeras 100 personas',
-      imageUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=900&q=80',
-      description: 'Una noche mágica de cine en el Parque Principal Capitán Ernesto Esguerra. Trae tu manta o cojín para disfrutar de una velada comunitaria inolvidable.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Una noche mágica de cine en el Parque Principal Capitán Ernesto Esguerra. Trae tu manta o cojín para disfrutar de una velada comunitaria inolvidable.',
       organizer: 'Centro Cultural Bacatá',
       organizerVerified: true,
       schedule: {
@@ -272,7 +296,7 @@ export class EventService {
         parkingAvailable: false,
       },
       isFeatured: false,
-      isFavorite: true,
+      isFavorite: false,
     },
     {
       id: 'evt-expo-arte-colonial',
@@ -283,8 +307,10 @@ export class EventService {
       categoryIcon: 'palette',
       status: 'normal',
       statusMessage: 'Visitas guiadas de 10:00h a 17:00h',
-      imageUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=900&q=80',
-      description: 'Muestra curada con más de 60 piezas históricas, grabados y lienzos que narran la evolución de Funza desde la época prehispánica hasta la villa republicana.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Muestra curada con más de 60 piezas históricas, grabados y lienzos que narran la evolución de Funza desde la época prehispánica hasta la villa republicana.',
       organizer: 'Casa Museo de la Cultura',
       organizerVerified: true,
       schedule: {
@@ -316,6 +342,189 @@ export class EventService {
       isFavorite: false,
     },
     {
+      id: 'evt-cultura-leyendas',
+      title: 'Noche de Leyendas Muiscas y Memoria Funzana',
+      subtitle: 'Cuentería patrimonial, luces y tradición oral',
+      category: 'cultura',
+      categoryLabel: 'Cultura',
+      categoryIcon: 'museum',
+      status: 'normal',
+      statusMessage: 'Conversatorio y narración en vivo',
+      imageUrl:
+        'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Recorrido narrado por las leyendas ancestrales de la laguna y el cacique Zaquesazipa en el Biblioparque Marqués de San Jorge con música tradicional en vivo.',
+      organizer: 'Biblioparque Marqués de San Jorge',
+      organizerVerified: true,
+      schedule: {
+        startDate: '2026-11-17T19:00:00',
+        endDate: '2026-11-17T21:30:00',
+        displayDate: 'Martes 17 de Noviembre, 2026',
+        displayTime: '19:00h a 21:30h',
+        doorsOpen: '18:30h',
+      },
+      location: {
+        venueName: 'Biblioparque Marqués de San Jorge',
+        address: 'Calle 15 # 6-30, Sector Histórico',
+        city: 'Funza',
+        lat: 4.7182,
+        lng: -74.2108,
+      },
+      pricing: {
+        isFree: true,
+        priceCOP: 0,
+        displayPrice: 'Entrada Libre',
+      },
+      tags: ['Cultura', 'Cuentería', 'Patrimonio', 'Funza'],
+      additionalInfo: {
+        ageRestriction: 'Todo público',
+        dressCode: 'Abrigo ligero',
+        weatherNotes: 'Auditorio cubierto',
+        parkingAvailable: true,
+      },
+      isFeatured: false,
+      isFavorite: false,
+    },
+    {
+      id: 'evt-entretenimiento-mosquera',
+      title: 'Noche de Stand-Up Comedy & Improvisación Sabanera',
+      subtitle: 'Humor local e invitados especiales de Bogotá',
+      category: 'entretenimiento',
+      categoryLabel: 'Entretenimiento',
+      categoryIcon: 'celebration',
+      status: 'agotado',
+      statusMessage: 'Agotado • Sin cupos disponibles',
+      imageUrl:
+        'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Espectáculo nocturno de comedia en vivo con tres comediantes invitados y formato de improvisación interactiva con el público de la Sabana.',
+      organizer: 'Teatro Colectivo Occidente',
+      organizerVerified: true,
+      schedule: {
+        startDate: '2026-11-21T20:00:00',
+        endDate: '2026-11-21T23:00:00',
+        displayDate: 'Sábado 21 de Noviembre, 2026',
+        displayTime: '20:00h a 23:00h',
+        doorsOpen: '19:15h',
+      },
+      location: {
+        venueName: 'Auditorio Municipal de Mosquera',
+        address: 'Calle 3 # 2-15, Parque Principal',
+        city: 'Mosquera',
+        lat: 4.7059,
+        lng: -74.2302,
+      },
+      pricing: {
+        isFree: false,
+        priceCOP: 30000,
+        displayPrice: '$30.000 COP',
+        ticketUrl: 'https://planazo.funza.gov.co',
+      },
+      availableTickets: 0,
+      totalTickets: 250,
+      tags: ['Comedia', 'Stand-Up', 'Mosquera', 'Entretenimiento'],
+      additionalInfo: {
+        ageRestriction: 'Mayores de 18 años',
+        dressCode: 'Casual nocturno',
+        weatherNotes: 'Auditorio cerrado',
+        parkingAvailable: true,
+      },
+      isFeatured: false,
+      isFavorite: false,
+    },
+    {
+      id: 'evt-actividad-fisica-madrid',
+      title: 'Jornada Activa: Yoga al Amanecer y Bici-Ruta Sabanera',
+      subtitle: 'Sesión guiada de bienestar, estiramiento y ciclopaseo',
+      category: 'actividad_fisica',
+      categoryLabel: 'Actividad Física',
+      categoryIcon: 'fitness_center',
+      status: 'normal',
+      statusMessage: 'Incluye hidratación y calentamiento guiado',
+      imageUrl:
+        'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Encuentro matutino al aire libre para practicar yoga restaurativo seguido de una ruta recreativa en bicicleta de 8 km entre parques de Madrid.',
+      organizer: 'Red Saludable Sabana Occidente',
+      organizerVerified: true,
+      schedule: {
+        startDate: '2026-11-22T07:30:00',
+        endDate: '2026-11-22T11:00:00',
+        displayDate: 'Domingo 22 de Noviembre, 2026',
+        displayTime: '07:30h a 11:00h',
+        doorsOpen: '07:00h',
+      },
+      location: {
+        venueName: 'Parque de las Flores',
+        address: 'Carrera 7 # 6-40',
+        city: 'Madrid, Cund.',
+        lat: 4.7324,
+        lng: -74.2642,
+      },
+      pricing: {
+        isFree: true,
+        priceCOP: 0,
+        displayPrice: 'Entrada Libre',
+      },
+      availableTickets: 120,
+      totalTickets: 150,
+      tags: ['Yoga', 'Bienestar', 'Bici', 'Madrid'],
+      additionalInfo: {
+        ageRestriction: 'Todo público',
+        dressCode: 'Ropa deportiva y tapete de yoga',
+        weatherNotes: 'Actividad al aire libre',
+        parkingAvailable: true,
+      },
+      isFeatured: false,
+      isFavorite: false,
+    },
+    {
+      id: 'evt-tunjo-facatativa',
+      title: 'Recorrido Pictogramas Parque Arqueológico Piedras del Tunjo',
+      subtitle: 'Expedición cultural y senderismo guiado en Facatativá',
+      category: 'cultura',
+      categoryLabel: 'Cultura',
+      categoryIcon: 'museum',
+      status: 'normal',
+      statusMessage: 'Aforo controlado • Guía patrimonial',
+      imageUrl:
+        'https://images.unsplash.com/photo-1501555088652-021faa106b9b?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Caminata interpretativa entre abrigos rocosos y arte rupestre muisca en el Parque Arqueológico de Facatativá con guías locales certificados.',
+      organizer: 'Vigías del Patrimonio Facatativá',
+      organizerVerified: true,
+      schedule: {
+        startDate: '2026-11-29T09:00:00',
+        endDate: '2026-11-29T13:00:00',
+        displayDate: 'Domingo 29 de Noviembre, 2026',
+        displayTime: '09:00h a 13:00h',
+        doorsOpen: '08:30h',
+      },
+      location: {
+        venueName: 'Parque Arqueológico Piedras del Tunjo',
+        address: 'Calle 5 # 15-10',
+        city: 'Facatativá',
+        lat: 4.8143,
+        lng: -74.3547,
+      },
+      pricing: {
+        isFree: false,
+        priceCOP: 12000,
+        displayPrice: '$12.000 COP',
+      },
+      availableTickets: 40,
+      totalTickets: 60,
+      tags: ['Arqueología', 'Facatativá', 'Senderismo', 'Cultura'],
+      additionalInfo: {
+        ageRestriction: 'Mayores de 6 años',
+        dressCode: 'Calzado de agarre y bloqueador solar',
+        weatherNotes: 'Espacio abierto',
+        parkingAvailable: true,
+      },
+      isFeatured: false,
+      isFavorite: false,
+    },
+    {
       id: 'evt-concierto-rock-pasado',
       title: 'Rock en la Sabana - Edición Octubre',
       subtitle: 'Bandas emergentes de Cundinamarca',
@@ -324,8 +533,10 @@ export class EventService {
       categoryIcon: 'music_note',
       status: 'finalizado',
       statusMessage: 'Evento finalizado el 15 de Octubre',
-      imageUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=900&q=80',
-      description: 'Festival de bandas de rock con gran acogida de público joven de la provincia sabanera.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Festival de bandas de rock con gran acogida de público joven de la provincia sabanera.',
       organizer: 'Colectivo Musical Funza',
       organizerVerified: false,
       schedule: {
@@ -348,7 +559,7 @@ export class EventService {
       },
       tags: ['Rock', 'Música', 'Finalizado'],
       isFeatured: false,
-      isFavorite: true,
+      isFavorite: false,
     },
     {
       id: 'evt-obra-teatro-cancelada',
@@ -359,8 +570,10 @@ export class EventService {
       categoryIcon: 'theater_comedy',
       status: 'cancelado',
       statusMessage: 'Cancelado por mantenimiento del recinto',
-      imageUrl: 'https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?auto=format&fit=crop&w=900&q=80',
-      description: 'Lamentamos informar que la función ha sido cancelada por imprevistos técnicos en la tramoya del auditorio.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?auto=format&fit=crop&w=900&q=80',
+      description:
+        'Lamentamos informar que la función ha sido cancelada por imprevistos técnicos en la tramoya del auditorio.',
       organizer: 'Grupo Teatral Sabanero',
       schedule: {
         startDate: '2026-11-18T19:00:00',
@@ -386,14 +599,15 @@ export class EventService {
     },
   ];
 
-  // señales reactivas para que todo fluya
   private eventsSignal = signal<PlanazoEvent[]>(this.initialEvents);
   private filtersSignal = signal<FilterOptions>(DEFAULT_FILTER_OPTIONS);
   private selectedCitySignal = signal<string>('Funza');
+  private attendingIdsSignal = signal<string[]>([]);
 
   readonly allEvents = this.eventsSignal.asReadonly();
   readonly activeFilters = this.filtersSignal.asReadonly();
   readonly selectedCity = this.selectedCitySignal.asReadonly();
+  readonly attendingIds = this.attendingIdsSignal.asReadonly();
 
   readonly featuredEvents = computed(() =>
     this.eventsSignal().filter(
@@ -402,24 +616,38 @@ export class EventService {
   );
 
   readonly upcomingEvents = computed(() =>
-    this.eventsSignal().filter(
-      (e) => e.status !== 'finalizado' && e.status !== 'cancelado'
-    )
+    this.eventsSignal()
+      .filter((e) => e.status !== 'finalizado' && e.status !== 'cancelado')
+      .sort(
+        (a, b) =>
+          new Date(a.schedule.startDate).getTime() - new Date(b.schedule.startDate).getTime()
+      )
   );
 
   readonly favoriteEvents = computed(() => {
     return this.eventsSignal()
       .filter((e) => e.isFavorite)
-      .sort((a, b) => new Date(a.schedule.startDate).getTime() - new Date(b.schedule.startDate).getTime());
+      .sort(
+        (a, b) =>
+          new Date(a.schedule.startDate).getTime() - new Date(b.schedule.startDate).getTime()
+      );
   });
 
-  // filtrado express
+  readonly cancelledFavoriteEvents = computed(() =>
+    this.favoriteEvents().filter((e) => e.status === 'cancelado')
+  );
+
   readonly filteredEvents = computed(() => {
     const list = this.eventsSignal();
     const filters = this.filtersSignal();
-    const query = filters.searchTerm.trim().toLowerCase();
+    const query = this.normalizeText(filters.searchTerm.trim());
 
     return list.filter((event) => {
+      // Los eventos finalizados salen de las recomendaciones y búsquedas activas (Caso Límite 1).
+      if (event.status === 'finalizado') {
+        return false;
+      }
+
       if (filters.onlyFree && !event.pricing.isFree) {
         return false;
       }
@@ -432,14 +660,31 @@ export class EventService {
         return false;
       }
 
-      if (query.length > 0) {
-        const matchesTitle = event.title.toLowerCase().includes(query);
-        const matchesOrganizer = event.organizer.toLowerCase().includes(query);
-        const matchesVenue = event.location.venueName.toLowerCase().includes(query);
-        const matchesTags = event.tags.some((t) => t.toLowerCase().includes(query));
-        const matchesDesc = event.description.toLowerCase().includes(query);
+      if (filters.maxDistanceKm > 0) {
+        const distanceKm = this.calculateDistanceFromCenter(event.location.lat, event.location.lng);
+        if (distanceKm > filters.maxDistanceKm) {
+          return false;
+        }
+      }
 
-        if (!matchesTitle && !matchesOrganizer && !matchesVenue && !matchesTags && !matchesDesc) {
+      if (!this.matchesDateFilter(event, filters)) {
+        return false;
+      }
+
+      if (query.length > 0) {
+        const searchableFields = [
+          event.title,
+          event.subtitle ?? '',
+          event.organizer,
+          event.location.venueName,
+          event.location.city,
+          event.description,
+          ...event.tags,
+        ];
+        const hasMatch = searchableFields.some((field) =>
+          this.normalizeText(field).includes(query)
+        );
+        if (!hasMatch) {
           return false;
         }
       }
@@ -450,27 +695,33 @@ export class EventService {
 
   constructor() {
     this.restoreFavoritesFromStorage();
+    this.restoreAttendingFromStorage();
+    void this.initOfflineCache();
   }
 
   getEventById(id: string): PlanazoEvent | undefined {
     return this.eventsSignal().find((e) => e.id === id);
   }
 
-  setFilterOptions(partial: Partial<FilterOptions>) {
+  setFilterOptions(partial: Partial<FilterOptions>): void {
     this.filtersSignal.update((curr) => ({ ...curr, ...partial }));
   }
 
-  resetFilters() {
-    this.filtersSignal.set(DEFAULT_FILTER_OPTIONS);
+  resetFilters(): void {
+    this.filtersSignal.set({
+      ...DEFAULT_FILTER_OPTIONS,
+      city: this.selectedCitySignal(),
+    });
   }
 
-  setSelectedCity(city: string) {
+  setSelectedCity(city: string): void {
     this.selectedCitySignal.set(city);
     this.setFilterOptions({ city });
   }
 
   toggleFavorite(eventId: string): boolean {
     let newState = false;
+    this.hasManualFavoriteChange = true;
     this.eventsSignal.update((events) =>
       events.map((e) => {
         if (e.id === eventId) {
@@ -481,17 +732,87 @@ export class EventService {
       })
     );
     this.saveFavoritesToStorage();
+    void this.sqliteService.saveFavorite(eventId, newState);
+    void this.sqliteService.cacheEvents(this.eventsSignal());
     return newState;
   }
 
-  // calculo para saber que tan lejos esta
+  setFavorite(eventId: string, isFavorite: boolean): void {
+    this.hasManualFavoriteChange = true;
+    this.eventsSignal.update((events) =>
+      events.map((e) => (e.id === eventId ? { ...e, isFavorite } : e))
+    );
+    this.saveFavoritesToStorage();
+    void this.sqliteService.saveFavorite(eventId, isFavorite);
+    void this.sqliteService.cacheEvents(this.eventsSignal());
+  }
+
+  isAttending(eventId: string): boolean {
+    return this.attendingIdsSignal().includes(eventId);
+  }
+
+  toggleAttendance(eventId: string): boolean {
+    const currentlyAttending = this.isAttending(eventId);
+    const nextState = !currentlyAttending;
+    this.attendingIdsSignal.update((ids) =>
+      nextState ? Array.from(new Set([...ids, eventId])) : ids.filter((id) => id !== eventId)
+    );
+    this.saveAttendingToStorage();
+    return nextState;
+  }
+
+  clearSessionFavorites(): void {
+    this.hasManualFavoriteChange = true;
+    this.eventsSignal.update((events) => events.map((e) => ({ ...e, isFavorite: false })));
+    this.attendingIdsSignal.set([]);
+    this.saveFavoritesToStorage();
+    this.saveAttendingToStorage();
+  }
+
+  async syncOfflineCache(): Promise<void> {
+    if (this.offlineService.isOffline()) {
+      const cached = await this.sqliteService.getCachedEvents();
+      if (cached.length > 0) {
+        this.eventsSignal.set(cached);
+      }
+      return;
+    }
+
+    await this.sqliteService.cacheEvents(this.eventsSignal());
+  }
+
+  private async initOfflineCache(): Promise<void> {
+    if (this.offlineService.isOffline()) {
+      const cached = await this.sqliteService.getCachedEvents();
+      if (cached.length > 0 && !this.hasManualFavoriteChange) {
+        this.eventsSignal.set(cached);
+      }
+    }
+
+    const sqliteFavIds = await this.sqliteService.getFavoriteIds();
+    if (sqliteFavIds.length > 0 && !this.hasManualFavoriteChange) {
+      this.eventsSignal.update((events) =>
+        events.map((e) => ({
+          ...e,
+          isFavorite: sqliteFavIds.includes(e.id),
+        }))
+      );
+    }
+
+    if (!this.offlineService.isOffline()) {
+      await this.sqliteService.cacheEvents(this.eventsSignal());
+    }
+  }
+
+  // Distancia Haversine en kilómetros desde el centro del municipio seleccionado.
   calculateDistanceFromCenter(lat: number, lng: number): number {
+    const center = CITY_COORDS[this.selectedCitySignal()] ?? CITY_COORDS['Funza'];
     const R = 6371;
-    const dLat = ((lat - this.FUNZA_LAT) * Math.PI) / 180;
-    const dLon = ((lng - this.FUNZA_LNG) * Math.PI) / 180;
+    const dLat = ((lat - center.lat) * Math.PI) / 180;
+    const dLon = ((lng - center.lng) * Math.PI) / 180;
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((this.FUNZA_LAT * Math.PI) / 180) *
+      Math.cos((center.lat * Math.PI) / 180) *
         Math.cos((lat * Math.PI) / 180) *
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
@@ -499,24 +820,92 @@ export class EventService {
     return Math.round(R * c * 10) / 10;
   }
 
-  // guardando en local storage
-  private saveFavoritesToStorage() {
+  private normalizeText(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  private matchesDateFilter(event: PlanazoEvent, filters: FilterOptions): boolean {
+    if (filters.dateFilter === 'all') {
+      return true;
+    }
+
+    const eventStart = new Date(event.schedule.startDate);
+    const eventEnd = new Date(event.schedule.endDate);
+    if (Number.isNaN(eventStart.getTime())) {
+      return true;
+    }
+
+    const now = new Date();
+
+    if (filters.dateFilter === 'today') {
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const endOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+      return eventStart <= endOfToday && eventEnd >= startOfToday;
+    }
+
+    if (filters.dateFilter === 'weekend') {
+      const startDay = eventStart.getDay();
+      return startDay === 5 || startDay === 6 || startDay === 0;
+    }
+
+    if (filters.dateFilter === 'this_month') {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      return eventStart <= endOfMonth && eventEnd >= startOfMonth;
+    }
+
+    if (filters.dateFilter === 'custom') {
+      if (filters.startDate) {
+        const minStart = new Date(
+          filters.startDate.includes('T') ? filters.startDate : `${filters.startDate}T00:00:00`
+        );
+        if (!Number.isNaN(minStart.getTime()) && eventStart < minStart) {
+          return false;
+        }
+      }
+
+      if (filters.endDate) {
+        const maxEnd = new Date(
+          filters.endDate.includes('T') ? filters.endDate : `${filters.endDate}T23:59:59`
+        );
+        if (!Number.isNaN(maxEnd.getTime()) && eventStart > maxEnd) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  private saveFavoritesToStorage(): void {
     try {
       const favIds = this.eventsSignal()
         .filter((e) => e.isFavorite)
         .map((e) => e.id);
       localStorage.setItem('planazo_favorites', JSON.stringify(favIds));
     } catch {
-      // si falló pailas xd
+      // Ignora fallo de cuota o acceso a localStorage.
     }
   }
 
-  private restoreFavoritesFromStorage() {
+  private restoreFavoritesFromStorage(): void {
     try {
       const saved = localStorage.getItem('planazo_favorites');
       if (saved) {
-        const ids: string[] = JSON.parse(saved);
-        if (Array.isArray(ids)) {
+        const parsed: unknown = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const ids = parsed as string[];
           this.eventsSignal.update((events) =>
             events.map((e) => ({
               ...e,
@@ -526,6 +915,29 @@ export class EventService {
         }
       }
     } catch {
+      // Mantiene favoritos iniciales si localStorage está corrupto.
+    }
+  }
+
+  private saveAttendingToStorage(): void {
+    try {
+      localStorage.setItem('planazo_attending_events', JSON.stringify(this.attendingIdsSignal()));
+    } catch {
+      // Ignora fallo de acceso a localStorage.
+    }
+  }
+
+  private restoreAttendingFromStorage(): void {
+    try {
+      const saved = localStorage.getItem('planazo_attending_events');
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          this.attendingIdsSignal.set(parsed as string[]);
+        }
+      }
+    } catch {
+      // Mantiene lista vacía si localStorage está corrupto.
     }
   }
 }

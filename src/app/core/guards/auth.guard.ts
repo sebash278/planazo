@@ -1,5 +1,7 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { Router } from '@angular/router';
+import type { CanActivateFn } from '@angular/router';
+
 import { AuthService } from '../services/auth.service';
 
 export const authGuard: CanActivateFn = (_route, state) => {
@@ -10,8 +12,14 @@ export const authGuard: CanActivateFn = (_route, state) => {
     return true;
   }
 
-  // siempre pal login
+  const message = state.url.includes('perfil')
+    ? 'Inicia sesión para gestionar tu perfil y preferencias'
+    : 'Inicia sesión para consultar y guardar tus eventos favoritos';
+
   return router.createUrlTree(['/auth/login'], {
-    queryParams: { returnUrl: state.url },
+    queryParams: {
+      returnUrl: state.url,
+      message,
+    },
   });
 };
