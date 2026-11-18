@@ -19,7 +19,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -30,7 +31,23 @@ html, body {
   overscroll-behavior-y: none;
 }
 
-h1, h2, h3, h4, h5, h6, .font-display, .font-headline {
+ion-content {
+  --background: var(--ion-background-color);
+  --color: var(--ion-text-color);
+}
+
+.ion-page {
+  background-color: var(--app-bg-canvas);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-display,
+.font-headline {
   font-family: var(--app-font-display);
   letter-spacing: -0.02em;
 }
@@ -71,6 +88,7 @@ h1, h2, h3, h4, h5, h6, .font-display, .font-headline {
 ::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -120,11 +138,114 @@ h1, h2, h3, h4, h5, h6, .font-display, .font-headline {
   box-shadow: var(--app-crimson-glow);
 }
 
-/* hacks para que leaflet no se rompa :v */
+/* Mapea las superficies oscuras a variables CSS de Ionic cuando el usuario activa Modo Claro. */
+body.light {
+  ion-content.bg-\[\#0d0e12\],
+  .bg-\[\#0d0e12\] {
+    background-color: var(--app-bg-canvas) !important;
+  }
+
+  .bg-\[\#0d0e12\]\/90,
+  .bg-\[\#0d0e12\]\/95,
+  .bg-\[\#0d0e12\]\/80,
+  .bg-\[\#121317\]\/95 {
+    background-color: var(--ion-toolbar-background) !important;
+  }
+
+  .bg-\[\#16181f\],
+  .bg-\[\#16181f\]\/95,
+  .bg-\[\#16181f\]\/98 {
+    background-color: var(--app-surface-card) !important;
+  }
+
+  .bg-\[\#1f222c\] {
+    background-color: var(--app-surface-float) !important;
+  }
+
+  .bg-\[\#282c38\] {
+    background-color: var(--app-surface-inset) !important;
+  }
+
+  .border-white\/10,
+  .border-white\/15,
+  .border-white\/5,
+  .border-white\/20 {
+    border-color: var(--app-border-subtle) !important;
+  }
+
+  .bg-white\/10 {
+    background-color: var(--app-border-subtle) !important;
+  }
+
+  .text-white:not([class*='bg-[#e11d48]']):not([class*='bg-black']):not([class*='bg-red-']):not([class*='bg-orange-']):not([class*='bg-slate-700']):not([class*='bg-gradient-']) {
+    color: var(--app-text-high);
+  }
+
+  .text-slate-200,
+  .text-slate-300 {
+    color: var(--app-text-medium);
+  }
+
+  .text-slate-400,
+  .text-slate-500 {
+    color: var(--app-text-muted);
+  }
+
+  [class*='bg-[#e11d48]'],
+  [class*='bg-black/'],
+  [class*='bg-red-600'],
+  [class*='bg-orange-600'] {
+    color: #ffffff;
+  }
+
+  [class*='bg-[#e11d48]'] .text-white,
+  [class*='bg-black/'] .text-white,
+  [class*='bg-slate-700'],
+  [class*='bg-slate-700'] .text-slate-200 {
+    color: #ffffff;
+  }
+
+  .bg-slate-800\/80 {
+    background-color: #f1f5f9 !important;
+  }
+
+  .bg-amber-950\/90 {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+  }
+
+  .bg-amber-950\/90 .text-amber-200,
+  .bg-amber-950\/90 .text-amber-400,
+  .bg-amber-950\/90 .text-amber-100 {
+    color: #92400e !important;
+  }
+
+  .bg-red-950\/70,
+  .bg-red-950\/60 {
+    background-color: #fef2f2 !important;
+  }
+
+  .bg-red-950\/70 .text-red-100,
+  .bg-red-950\/70 .text-rose-200,
+  .bg-red-950\/70 .text-white,
+  .bg-red-950\/60 .text-red-200 {
+    color: #991b1b !important;
+  }
+
+  .bg-orange-950\/60 {
+    background-color: #fff7ed !important;
+  }
+
+  .bg-orange-950\/60 .text-orange-100,
+  .bg-orange-950\/60 .text-white {
+    color: #9a3412 !important;
+  }
+}
+
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background-color: #0d0e12 !important;
+  background-color: var(--app-bg-canvas) !important;
   font-family: var(--app-font-body);
 }
 
@@ -133,28 +254,28 @@ h1, h2, h3, h4, h5, h6, .font-display, .font-headline {
 }
 
 .leaflet-popup-content-wrapper {
-  background: #16181f !important;
-  color: #ffffff !important;
+  background: var(--app-surface-card) !important;
+  color: var(--app-text-high) !important;
   border-radius: 12px !important;
   border: 1px solid rgba(225, 29, 72, 0.4) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
 }
 
 .leaflet-popup-tip {
-  background: #16181f !important;
+  background: var(--app-surface-card) !important;
 }
 
 ion-tab-bar {
-  --background: rgba(18, 19, 23, 0.94);
+  --background: var(--ion-tab-bar-background);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--ion-border-color);
   height: 60px;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 ion-tab-button {
-  --color: #94a3b8;
+  --color: var(--app-text-medium);
   --color-selected: #e11d48;
   font-family: var(--app-font-display);
   font-weight: 600;
