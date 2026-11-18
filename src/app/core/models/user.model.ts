@@ -1,4 +1,4 @@
-import { EventCategory } from './event.model';
+import type { EventCategory } from './event.model';
 
 export interface UserProfile {
   id: string;
@@ -9,7 +9,10 @@ export interface UserProfile {
   interestedCategories: EventCategory[];
   isGuest: boolean;
   memberSince?: string;
+  authProvider?: 'local' | 'google';
 }
+
+export type User = UserProfile;
 
 export interface AuthResponse {
   token: string;

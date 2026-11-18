@@ -1,13 +1,6 @@
-export type EventCategory =
-  | 'todos'
-  | 'musica'
-  | 'cine'
-  | 'gastronomia'
-  | 'deportes'
-  | 'arte'
-  | 'cultura'
-  | 'teatro'
-  | 'ecologia';
+import type { EventCategory, Category } from './category.model';
+
+export type { EventCategory, Category };
 
 export type EventStatus =
   | 'normal'
@@ -68,3 +61,5 @@ export interface PlanazoEvent {
   isFeatured?: boolean;
   isFavorite?: boolean;
 }
+
+export type Event = PlanazoEvent;

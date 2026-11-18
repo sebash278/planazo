@@ -1,11 +1,13 @@
-import { EventCategory } from './event.model';
+import type { EventCategory } from './event.model';
 
-export type DateFilterOption = 'all' | 'today' | 'weekend' | 'this_month';
+export type DateFilterOption = 'all' | 'today' | 'weekend' | 'this_month' | 'custom';
 
 export interface FilterOptions {
   searchTerm: string;
   category: EventCategory;
   dateFilter: DateFilterOption;
+  startDate?: string;
+  endDate?: string;
   onlyFree: boolean;
   maxPrice: number;
   maxDistanceKm: number;
